@@ -1,0 +1,53 @@
+{
+  "simulation": {
+    "start_cash": 100000,
+    "slippage": 0.0001,
+    "commission": 0.0002,
+    "timeframe": "1Min",
+    "period": {
+      "start": "2023-01-01",
+      "end": "2023-02-01"
+    }
+  },
+  "broker": {
+    "name": "alpaca",
+    "config": {}
+  },
+  "data_provider": {
+    "name": "alpaca",
+    "config": {}
+  },
+  "strategies": [
+    {
+      "name": "ema_crossover",
+      "enabled": true,
+      "paper": true,
+      "config": {
+        "symbol": "SPY",
+        "timeframe": "1Min",
+        "period": {
+          "start": "2023-01-01",
+          "end": "2023-02-01"
+        },
+        "short_window": 5,
+        "long_window": 20,
+        "size": 1
+      }
+    },
+    {
+      "name": "mean_reversion",
+      "enabled": false,
+      "paper": false,
+      "config": {
+        "symbol": "SPY",
+        "timeframe": "1Min",
+        "period": {
+          "start": "2023-01-01",
+          "end": "2023-02-01"
+        },
+        "lookback": 300,
+        "threshold": 1.5
+      }
+    }
+  ]
+} 

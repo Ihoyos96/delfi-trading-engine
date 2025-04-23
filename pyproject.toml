@@ -1,0 +1,39 @@
+[project]
+name = "delfi-trading-engine"
+version = "1.0.0"
+description = ""
+authors = [
+    {name = "DevHoyops",email = "Ihoyos96@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.13,<4.0.0"
+dependencies = [
+    "alpaca-trade-api (>=3.2.0,<4.0.0)",
+    "pandas (>=2.2.3,<3.0.0)",
+    "numpy (>=2.2.5,<3.0.0)",
+    "scikit-learn (>=1.6.1,<2.0.0)",
+    "xgboost (>=3.0.0,<4.0.0)",
+    "joblib (>=1.4.2,<2.0.0)",
+    "structlog (>=25.2.0,<26.0.0)",
+    "prometheus-client (>=0.21.1,<0.22.0)",
+    "pydantic (>=2.11.3,<3.0.0)",
+    "python-dotenv (>=1.1.0,<2.0.0)",
+    "backtrader (>=1.9.78.123,<2.0.0.0)",
+    "alpaca-py (>=0.39.4,<0.40.0)",
+    "questionary (>=2.1.0,<3.0.0)",
+    "redis (>=4.5.5,<5.0.0)",
+    "httpx (>=0.28.1,<0.29.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+black = "^25.1.0"
+flake8 = "^7.2.0"
+pytest = "^8.3.5"
+hypothesis = "^6.131.6"
+pre-commit = "^4.2.0"
+
