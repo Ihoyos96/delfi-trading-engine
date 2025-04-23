@@ -4,6 +4,7 @@ import json
 import redis
 import pandas as pd
 from datetime import datetime
+import asyncio
 
 from src.data_providers.base_data_provider import BaseDataProvider
 from src.data_providers.alpaca_data_provider import AlpacaDataProvider
@@ -42,7 +43,8 @@ class RedisBarProvider(BaseDataProvider):
                 'close': data['close'],
                 'volume': data['volume'],
             }
-            handler(tick)
+            # Execute the async handler in a new event loop for each tick
+            asyncio.run(handler(tick))
         self.pubsub.subscribe(**{channel: _handler})
 
     def run(self):

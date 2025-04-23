@@ -21,3 +21,6 @@ backtests/
 
 # Ignore Redis database files
 dump.rdb
+
+# Ignore build artifacts
+aggregator/target/

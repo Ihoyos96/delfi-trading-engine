@@ -112,6 +112,7 @@ def interactive_start():
         params['timeframe'] = timeframe
         params['period'] = {'start': start_str, 'end': end_str}
         for field_name, field_info in config_model.model_fields.items():
+            # skip core and strategy-internal params;
             if field_name in ('symbol', 'timeframe', 'period'):
                 continue
             default_val = field_info.get_default() or ''

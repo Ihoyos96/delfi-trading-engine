@@ -26,9 +26,24 @@ class EMACrossoverStrategy(BaseStrategy):
         self.long_ema = None
         self.position = 0
 
-    async def on_new_tick(self, tick: Dict[str, Any]) -> None:
+    def _get_order_type(self, price: float) -> str:
+        """
+        Dynamically choose order type based on EMA spread.
+        Use market if difference between short and long EMA exceeds 0.1% of price,
+        otherwise use limit order.
+        """
+        if self.short_ema is None or self.long_ema is None:
+            return "market"
+        spread = abs(self.short_ema - self.long_ema)
+        # threshold = 0.1% of price
+        if spread > 0.001 * price:
+            return "market"
+        return "limit"
+
+    async def process_new_bar(self, bar: Dict[str, Any]) -> None:
         """Process each incoming tick/bar, update EMAs, and send orders on crossovers."""
-        price = tick.get("close")
+        print(f"[EMACrossoverStrategy] Processing bar: {bar}")
+        price = bar.get("close")
         if price is None:
             return
         self.prices.append(price)
@@ -50,15 +65,33 @@ class EMACrossoverStrategy(BaseStrategy):
 
         # Crossover logic
         if self.short_ema > self.long_ema and self.position <= 0:
-            # Enter long
+            # Enter long: strategy decides order type
             size = self.params.dict().get("size", 1)
-            await self.broker.place_order("BUY", size=size, price=price)
+            order_type = self._get_order_type(price)
+            # Round price to penny for limit orders
+            price_to_submit = round(price, 2) if order_type == "limit" else price
+            await self.broker.place_order(
+                side="BUY",
+                size=size,
+                price=price_to_submit,
+                symbol=self.params.symbol,
+                order_type=order_type
+            )
             self.position = 1
 
         elif self.short_ema < self.long_ema and self.position >= 0:
-            # Enter short
+            # Enter short: strategy decides order type
             size = self.params.dict().get("size", 1)
-            await self.broker.place_order("SELL", size=size, price=price)
+            order_type = self._get_order_type(price)
+            # Round price to penny for limit orders
+            price_to_submit = round(price, 2) if order_type == "limit" else price
+            await self.broker.place_order(
+                side="SELL",
+                size=size,
+                price=price_to_submit,
+                symbol=self.params.symbol,
+                order_type=order_type
+            )
             self.position = -1
 
     async def on_stop(self) -> None:
@@ -71,20 +104,14 @@ class EMACrossoverStrategy(BaseStrategy):
         Execute the strategy live using the pre-assigned broker and data provider.
         """
         import asyncio
-        print(f"Starting EMA Crossover live run with params: {self.params}")
+        print(f"[EMACrossoverStrategy] Starting EMA Crossover live run with params: {self.params}")
         # initialize state
         asyncio.run(self.on_start())
 
         # handler to wrap incoming bars into on_new_tick
         async def _handle_bar(bar):
-            tick = {
-                'open': float(bar.open),
-                'high': float(bar.high),
-                'low': float(bar.low),
-                'close': float(bar.close),
-                'volume': float(bar.volume)
-            }
-            await self.on_new_tick(tick)
+            # bar comes in as a dict from Redis provider
+            await self.process_new_bar(bar)
 
         # subscribe to real-time bar stream
         self.data_provider.subscribe_bars(_handle_bar, self.params.symbol, self.params.timeframe)
@@ -93,8 +120,9 @@ class EMACrossoverStrategy(BaseStrategy):
         try:
             self.data_provider.run()
         except KeyboardInterrupt:
-            print("Stopping live data stream")
+            print("[EMACrossoverStrategy] Stopping live data stream")
         finally:
+            # cleanup
             asyncio.run(self.on_stop())
 
     def backtest(self) -> dict:

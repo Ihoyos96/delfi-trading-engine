@@ -20,9 +20,11 @@ class SimulatedBroker:
         self,
         side: str,
         size: float,
-        price: float
+        price: float,
+        symbol: str,
+        order_type: str = "limit"
     ) -> None:
-        """Execute order immediately with slippage & commission."""
+        """Execute order immediately with slippage & commission. 'symbol' and 'order_type' parameters are accepted but ignored."""
         # adjust for slippage
         fill_price = price * (1 + self.slippage) if side.upper() == 'BUY' else price * (1 - self.slippage)
         cost = fill_price * size

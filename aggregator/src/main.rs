@@ -2,17 +2,11 @@ use std::env;
 use tokio::{sync::mpsc, time::{interval, Duration}};
 use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
 use futures_util::{StreamExt, SinkExt};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use serde_json::json;
 use redis::AsyncCommands;
 use chrono::Utc;
 use clap::Parser;
-
-#[derive(Debug, Deserialize)]
-struct AlpacaStreamMsg {
-    stream: String,
-    data: serde_json::Value,
-}
 
 #[derive(Debug)]
 struct TradeEvent {
@@ -83,41 +77,42 @@ async fn main() -> anyhow::Result<()> {
     let (tx, mut rx) = mpsc::unbounded_channel::<TradeEvent>();
 
     // Task: read websocket messages and push trades to channel
-    let symbol_clone = symbol.clone();
     tokio::spawn(async move {
         println!("[Agg] Entered WebSocket read loop");
         while let Some(msg) = read.next().await {
-            println!("[Agg] Raw WS msg: {:?}", msg);
+            // println!("[Agg] Raw WS msg: {:?}", msg);
             if let Ok(Message::Text(txt)) = msg {
-                println!("[Agg] WS text payload: {}", txt);
-                if let Ok(parsed) = serde_json::from_str::<AlpacaStreamMsg>(&txt) {
-                    println!("[Agg] Parsed stream msg: {}", parsed.stream);
-                    let trade_prefix = format!("T.{}", symbol_clone);
-                    let quote_prefix = format!("Q.{}", symbol_clone);
-                    if parsed.stream == trade_prefix {
-                        if let Some(arr) = parsed.data.as_array() {
-                            for item in arr {
-                                println!("[Agg] Processing trade item: {:?}", item);
-                                let price = item["p"].as_f64().unwrap_or(0.0);
-                                let size = item["s"].as_f64().unwrap_or(0.0);
-                                println!("[Agg] Sending TradeEvent: price={}, size={}", price, size);
-                                let _ = tx.send(TradeEvent { price, size });
-                            }
-                        }
-                    } else if parsed.stream == quote_prefix {
-                        if let Some(arr) = parsed.data.as_array() {
-                            for item in arr {
-                                println!("[Agg] Processing quote item: {:?}", item);
-                                // use mid-price as tick
-                                let bid = item["bp"].as_f64().unwrap_or(0.0);
-                                let ask = item["ap"].as_f64().unwrap_or(0.0);
-                                let price = (bid + ask) / 2.0;
-                                let size = item["bs"].as_f64().unwrap_or(0.0) + item["as"].as_f64().unwrap_or(0.0);
-                                println!("[Agg] Sending QuoteEvent as TradeEvent: price={}, size={}", price, size);
-                                let _ = tx.send(TradeEvent { price, size });
+                // println!("[Agg] WS text payload: {}", txt);
+                // Parse IEX/SIP feed: JSON arrays of events
+                if let Ok(events) = serde_json::from_str::<Vec<serde_json::Value>>(&txt) {
+                    for event in events {
+                        if let Some(event_type) = event.get("T").and_then(|v| v.as_str()) {
+                            match event_type {
+                                "t" => {
+                                    // trade event
+                                    let price = event.get("p").and_then(|v| v.as_f64()).unwrap_or(0.0);
+                                    let size = event.get("s").and_then(|v| v.as_f64()).unwrap_or(0.0);
+                                    // println!("[Agg] Sending TradeEvent: price={}, size={}", price, size);
+                                    let _ = tx.send(TradeEvent { price, size });
+                                },
+                                "q" => {
+                                    // quote event: compute mid-price and combined size
+                                    let bid = event.get("bp").and_then(|v| v.as_f64()).unwrap_or(0.0);
+                                    let ask = event.get("ap").and_then(|v| v.as_f64()).unwrap_or(0.0);
+                                    let price = (bid + ask) / 2.0;
+                                    let size = event.get("bs").and_then(|v| v.as_f64()).unwrap_or(0.0)
+                                        + event.get("as").and_then(|v| v.as_f64()).unwrap_or(0.0);
+                                    // println!("[Agg] Sending QuoteEvent as TradeEvent: price={}, size={}", price, size);
+                                    let _ = tx.send(TradeEvent { price, size });
+                                },
+                                _ => {
+                                    // println!("[Agg] Ignoring event type: {}", event_type);
+                                }
                             }
                         }
                     }
+                } else {
+                    // eprintln!("[Agg][Error] Failed to parse WS text as JSON array: {}", txt);
                 }
             }
         }
@@ -129,12 +124,15 @@ async fn main() -> anyhow::Result<()> {
     loop {
         tokio::select! {
             Some(evt) = rx.recv() => {
-                println!("[Agg] Received trade event from channel: price={}, size={}", evt.price, evt.size);
+                // println!("[Agg] Received trade event from channel: price={}, size={}", evt.price, evt.size);
                 buf.push(evt);
             }
             _ = ticker.tick() => {
-                println!("[Agg] Aggregation tick; events in buffer: {}", buf.len());
-                if buf.is_empty() { continue; }
+                // println!("[Agg] Aggregation tick; events in buffer: {}", buf.len());
+                if buf.is_empty() { 
+                    // println!("[Agg] No events to aggregate, skipping tick");
+                    continue; 
+                }
                 // compute OHLCV
                 let open = buf[0].price;
                 let mut high = open;
@@ -157,7 +155,7 @@ async fn main() -> anyhow::Result<()> {
                     volume,
                 };
                 let channel = format!("bars:{}", symbol);
-                println!("[Agg] Publishing bar JSON: {}", serde_json::to_string(&bar)?);
+                // println!("[Agg] Publishing bar JSON: {}", serde_json::to_string(&bar)?);
                 let _: () = redis_conn.publish(channel, serde_json::to_string(&bar)?).await?;
                 buf.clear();
             }

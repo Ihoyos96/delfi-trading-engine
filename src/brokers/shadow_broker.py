@@ -15,7 +15,15 @@ class ShadowBroker(BaseBroker):
         if not self.webhook_url:
             print("Warning: No Discord webhook URL configured; Discord notifications disabled")
 
-    async def place_order(self, side: str, size: float, price: float, symbol: str):
+    async def place_order(
+        self,
+        side: str,
+        size: float,
+        price: float,
+        symbol: str,
+        order_type: str = "limit"
+    ):
+        """Log shadow order signals; 'order_type' parameter is accepted but ignored."""
         message = f"Shadow Signal -> {side} {size} @ {price} ({symbol})"
         print(message)
         if self.webhook_url:

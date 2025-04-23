@@ -17,6 +17,10 @@ class BaseStrategy(ABC):
         self.broker = broker
         # Data provider (set during init)
         self.data_provider = data_provider
+    
+    def process_new_bar(self, bar: Dict[str, Any]) -> None:
+        """Process each incoming bar"""
+        raise NotImplementedError
 
     def run(self) -> None:
         """

@@ -67,7 +67,7 @@ class AlpacaDataProvider(BaseDataProvider):
                 except redis.exceptions.ConnectionError:
                     print("[DataProvider] Redis not running; launching redis-server...")
                     subprocess.Popen(['redis-server', '--daemonize', 'yes'])
-                    time.sleep(1)
+                    time.sleep(2)
                     self._redis_started = True
                 # launch external Rust aggregator
                 if symbol not in self._aggregators:
@@ -90,7 +90,7 @@ class AlpacaDataProvider(BaseDataProvider):
                     print(f"[DataProvider] Redis listener thread started for channel: {channel}")
                     for message in pubsub.listen():
                         if message and message['type'] == 'message':
-                            print(f"[DataProvider] Raw Redis message: {message['data']}")
+                            # print(f"[DataProvider] Raw Redis message: {message['data']}") TODO: Set debug log mode
                             data = json.loads(message['data'])
                             tick = {
                                 'open': data['open'],

@@ -71,7 +71,7 @@ class Backtester:
                 'close': float(bar['close']),
                 'volume': float(bar['volume'])
             }
-            loop.run_until_complete(strategy.on_new_tick(tick))
+            loop.run_until_complete(strategy.process_new_bar(tick))
 
         loop.run_until_complete(strategy.on_stop())
         loop.close()

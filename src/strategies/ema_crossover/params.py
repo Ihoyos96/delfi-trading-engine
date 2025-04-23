@@ -7,4 +7,4 @@ class EMACrossoverParams(BaseModel):
     period: Period
     short_window: int = Field(5, ge=1)
     long_window: int = Field(20, ge=1)
-    size: float = Field(1.0, gt=0) 
+    size: float = Field(1.0, gt=0)
