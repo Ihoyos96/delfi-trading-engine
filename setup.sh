@@ -5,12 +5,12 @@ echo -e "\033[34mRunning setup for delfi-trading-engine...\033[0m\n"
 
 # Ensure Poetry is installed
 if ! command -v poetry >/dev/null; then
-  echo "Poetry not found; installing via official installer..."
+  echo -e "\n\033[31mPoetry not found;\033[34m installing via official installer...\033[0m"
   curl -sSL https://install.python-poetry.org | python3 -
   # Add Poetry to PATH for this session
   export PATH="$HOME/.local/bin:$PATH"
 else
-  echo -e "\033[33mPoetry already installed: $(poetry --version)\033[0m\n"
+  echo -e "\033[38;5;208mPoetry already installed: $(poetry --version)\033[0m\n"
 fi
 
 # Install Python dependencies
@@ -24,11 +24,11 @@ fi
 
 # Ensure Cargo (Rust) is installed
 if ! command -v cargo >/dev/null; then
-  echo -e "\033[34mRust/Cargo not found; installing via Homebrew...\033[0m"
+  echo -e "\n\033[34mRust/Cargo not found; installing via Homebrew...\033[0m"
   brew update
   brew install rust
 else
-  echo -e "\033[33mRust/Cargo already installed: $(cargo --version)\033[0m\n"
+  echo -e "\n\033[38;5;208mRust/Cargo already installed: $(cargo --version)\033[0m\n"
 fi
 
 # Ensure Redis is installed
@@ -37,7 +37,7 @@ if ! command -v redis-server >/dev/null; then
   brew update
   brew install redis
 else
-  echo -e "\033[33mRedis already installed: $(redis-server --version)\033[0m\n"
+  echo -e "\033[38;5;208mRedis already installed: $(redis-server --version)\033[0m\n"
 fi
 
 # Build the Rust bar_aggregator binary

@@ -13,5 +13,9 @@ cleanup() {
 trap cleanup SIGINT SIGTERM EXIT
 
 echo "Launching trading engine..."
+# Check if --configured flag is passed
+if [[ " $@ " =~ " --configured " ]]; then
+  echo -e "\033[34mRunning in configured mode\033[0m"
+fi
 # Pass any arguments through to the CLI
-python -m src.main "$@" 
+python -m src.main "$@"

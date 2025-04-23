@@ -18,11 +18,13 @@ This will install Rust via Homebrew (if needed) and compile `bar_aggregator` int
 Use the interactive CLI:
 
 ```bash
-python -m src.cli.interactive
+chmod +x start.sh
+./start.sh
 ```
 
-Or provide a JSON config:
+Run in configure mode (Uses config file):
 
 ```bash
-python -m src.main config.json
+chmod +x start.sh
+./start.sh --configured
 ```

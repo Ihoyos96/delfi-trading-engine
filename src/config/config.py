@@ -44,6 +44,9 @@ class Config(BaseModel):
 
 def load_config(path: str) -> Config:
     """Load and validate JSON config, returning a Config instance."""
-    with open(path) as f:
-        data = json.load(f)
-    return Config.parse_obj(data) 
+    try:
+        with open(path) as f:
+            data = json.load(f)
+        return Config.model_validate(data)
+    except FileNotFoundError:
+        raise FileNotFoundError("Config file missing (Expected config.json at root)")
