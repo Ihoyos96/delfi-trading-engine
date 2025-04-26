@@ -18,20 +18,23 @@ class BaseStrategy(ABC):
         # Data provider (set during init)
         self.data_provider = data_provider
     
-    def process_new_bar(self, bar: Dict[str, Any]) -> None:
-        """Process each incoming bar"""
+    def on_start(self) -> None:
+        """Perform any setup required for the strategy"""
+        raise NotImplementedError
+    
+    def on_stop(self) -> None:
+        """Perform any cleanup required after the strategy has stopped"""
+        raise NotImplementedError
+
+    def on_new_data(self, data: Dict[str, Any]) -> None:
+        """
+        Handle incoming market data
+        Implement the broker logic here to perform trading operations
+        """
         raise NotImplementedError
 
     def run(self) -> None:
         """
-        Execute the strategy in live mode using the pre-assigned broker.
-        If shadow_mode=True, broker should log signals instead of executing orders.
-        """
-        raise NotImplementedError
-
-    def backtest(self) -> dict:
-        """
-        Execute full backtest for this strategy using historical data.
-        Returns performance metrics as a dict.
+        Orchestrate the data provider to feed data to the on_new_data method.
         """
         raise NotImplementedError

@@ -20,7 +20,7 @@ This document outlines a clear, incremental roadmap for building, testing, and d
 
 ## Phase 3: ML‑Driven Signals & Dynamic Sizing
 - Training pipeline: build a daily retrain workflow for XGBoost (or light NN) with nested cross‑validation and purge & embargo.
-- Feature store & live inference: expose model predict calls in the `on_new_tick` handler for real‑time alpha.
+- Feature store & live inference: expose model predict calls in the `on_new_data` handler for real‑time alpha.
 - Decision logic update: swap rule‑based thresholds for model probabilities (P_up, P_down) with trend filter.
 - Fractional Kelly sizing: compute position size with 50% Kelly, cap at 1% equity, fallback to fixed fraction if stats insufficient.
 - Model validation: maintain a rolling "cold start" holdout, track drift, and log confidence distributions.

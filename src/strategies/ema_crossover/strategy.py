@@ -40,8 +40,8 @@ class EMACrossoverStrategy(BaseStrategy):
             return "market"
         return "limit"
 
-    async def process_new_bar(self, bar: Dict[str, Any]) -> None:
-        """Process each incoming tick/bar, update EMAs, and send orders on crossovers."""
+    async def on_new_data(self, bar: Dict[str, Any]) -> None:
+        """Handle incoming market data"""
         print(f"[EMACrossoverStrategy] Processing bar: {bar}")
         price = bar.get("close")
         if price is None:
@@ -108,10 +108,10 @@ class EMACrossoverStrategy(BaseStrategy):
         # initialize state
         asyncio.run(self.on_start())
 
-        # handler to wrap incoming bars into on_new_tick
+        # handler to wrap incoming bars into on_new_data
         async def _handle_bar(bar):
             # bar comes in as a dict from Redis provider
-            await self.process_new_bar(bar)
+            await self.on_new_data(bar)
 
         # subscribe to real-time bar stream
         self.data_provider.subscribe_bars(_handle_bar, self.params.symbol, self.params.timeframe)

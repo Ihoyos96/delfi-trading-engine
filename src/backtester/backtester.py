@@ -64,14 +64,14 @@ class Backtester:
 
         # feed bars
         for _, bar in df.iterrows():
-            tick = {
+            bar = {
                 'open': float(bar['open']),
                 'high': float(bar['high']),
                 'low': float(bar['low']),
                 'close': float(bar['close']),
                 'volume': float(bar['volume'])
             }
-            loop.run_until_complete(strategy.process_new_bar(tick))
+            loop.run_until_complete(strategy.on_new_data(bar))
 
         loop.run_until_complete(strategy.on_stop())
         loop.close()

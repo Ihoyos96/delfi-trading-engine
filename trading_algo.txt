@@ -111,7 +111,7 @@ class HighEdgeAlgo:
         self.daily_loss = 0
         self.open_positions = []
 
-    def on_new_tick(self, tick):
+    def on_new_data(self, tick):
         features = compute_features(self.data_window)
         p_up, p_down = self.model.predict(features)
         trend = self.get_trend_filter()
