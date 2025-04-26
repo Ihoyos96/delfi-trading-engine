@@ -1,7 +1,7 @@
 import os
 from alpaca.trading.client import TradingClient
-from alpaca.trading.requests import LimitOrderRequest, MarketOrderRequest
-from alpaca.trading.enums import OrderSide, TimeInForce
+from alpaca.trading.requests import LimitOrderRequest, MarketOrderRequest, GetOrdersRequest
+from alpaca.trading.enums import OrderSide, TimeInForce, QueryOrderStatus
 from src.brokers.base_broker import BaseBroker
 
 class AlpacaBroker(BaseBroker):
@@ -14,6 +14,22 @@ class AlpacaBroker(BaseBroker):
         if not api_key or not api_secret:
             raise ValueError("API credentials not found in environment variables")
         self.client = TradingClient(api_key, api_secret, paper=paper)
+
+    async def get_account(self):
+        """Fetch account details: cash, buying_power, equity, etc."""
+        return self.client.get_account()
+    
+    async def get_all_positions(self):
+        """Fetch all current positions."""
+        return await self.client.get_all_positions()
+
+    async def get_orders(self, status: str = "open", side: str = "sell"):
+        """Fetch orders with given status (open, closed, all)."""
+        request_params = GetOrdersRequest(
+            status=QueryOrderStatus.OPEN if status.lower() == "open" else QueryOrderStatus.ALL,
+            side=OrderSide.SELL if side.lower() == "sell" else OrderSide.BUY,
+        )
+        return await self.client.get_orders(filter=request_params)
 
     async def place_order(self, side: str, size: float, price: float, symbol: str, order_type: str):
         """Place an order on Alpaca, branching between market and limit types."""

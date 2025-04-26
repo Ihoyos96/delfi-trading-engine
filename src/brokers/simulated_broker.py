@@ -1,4 +1,5 @@
 from typing import Type, Dict, Any
+from types import SimpleNamespace
 
 class SimulatedBroker:
     """Simple broker simulator with slippage, commission, and position tracking."""
@@ -33,11 +34,11 @@ class SimulatedBroker:
         # update cash and positions
         if side.upper() == 'BUY':
             self.cash -= cost + fee
-            self.positions.append({'side': 'LONG', 'size': size, 'entry': fill_price, 'commission': fee})
+            self.positions.append({'symbol': symbol, 'side': 'LONG', 'size': size, 'entry': fill_price, 'commission': fee})
         else:
             # SELL means short
             self.cash += cost - fee
-            self.positions.append({'side': 'SHORT', 'size': size, 'entry': fill_price, 'commission': fee})
+            self.positions.append({'symbol': symbol, 'side': 'SHORT', 'size': size, 'entry': fill_price, 'commission': fee})
 
         # record trade
         self.trades.append({'side': side.upper(), 'size': size, 'price': fill_price, 'commission': fee})
@@ -60,3 +61,16 @@ class SimulatedBroker:
             'total_return': (self.cash / self.start_cash - 1),
             'trades': len(self.trades)
         }
+
+    async def get_account(self):
+        """Return simulated account with cash and equity attributes."""
+        # Simulated equity equals current cash (ignoring open positions for simplicity)
+        return SimpleNamespace(cash=self.cash, equity=self.cash)
+
+    async def get_all_positions(self):
+        """Return a list of current open positions."""
+        return self.positions
+
+    async def get_orders(self, status: str = "open", side: str = "sell"):
+        """Return empty list (no order book in simulation)."""
+        return []
